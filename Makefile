@@ -1,30 +1,44 @@
-CC               = g++ -g
+CC               = gcc
 YACC             = bison -d
 LEX              = flex
-TARGET          ?= main
+TARGET          ?= test_detach
 
-CFLAGS          += -Wall
+DEBUG           ?= -g -DDEBUG
+
+CFLAGS          += -Wall -I $(srcdir)
 
 genfiles         =
-files            = list green_thread
+files            = list gthread
 libfiles         = 
 
-gensources       = $(addsuffix .c,$(genfiles)) 
-genheaders       = 
-sources          = $(addsuffix .c,$(files)) $(addsuffix .c,$(libfiles))
-headers          = $(addsuffix .h,$(files)) $(addsuffix .h,$(libfiles))
-objects          = $(addsuffix .o,$(files)) $(addsuffix .o,$(genfiles)) $(addsuffix .o,$(libfiles))
+srcdir           = src/
+libdir           = src/
+objdir           = obj/
+bindir           = bin/
+testdir          = tests/
 
+gensources       = $(addprefix $(gendir), $(addsuffix .c,$(genfiles)))
+genheaders       = 
+sources          = $(addprefix $(srcdir), $(addsuffix .c,$(files))) $(addprefix $(srcdir), $(addsuffix .c,$(libfiles)))
+headers          = $(addprefix $(srcdir), $(addsuffix .h,$(files))) $(addprefix $(srcdir), $(addsuffix .h,$(libfiles)))
+objects          = $(addprefix $(objdir), $(addsuffix .o,$(files))) $(addprefix $(objdir), $(addsuffix .o,$(genfiles))) $(addprefix $(objdir), $(addsuffix .o,$(libfiles)))
+objects_dbg      = $(addsuffix .dbg.o,$(files)) $(addsuffix .o,$(genfiles)) $(addsuffix .o,$(libfiles))
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(bindir)$(TARGET)
 
 clean:
-	$(RM) *.o $(gensources) $(genheaders) $(TARGET)
+	$(RM) $(objdir)*.o $(gensources) $(genheaders) $(bindir)*
 
-$(TARGET): $(sources) $(headers) $(gensources) $(genheaders) $(objects) 
-	$(CC) $(CFLAGS) $(objects) -o $(TARGET)
+#$(lib): $(objects)
+#	$(AR) 
+
+$(bindir)%:  $(testdir)%.o $(sources) $(headers) $(gensources) $(genheaders) $(objects)
+	$(CC) $(CFLAGS) $(objects) $< -o $@
+
+$(bindir)%.dbg: $(testdir)%.dbg.o $(sources) $(headers) $(gensources) $(genheaders) $(objects_dbg) 
+	$(CC) $(CFLAGS) $(objects_dbg) $< -o $@
 
 parser.tab.c parser.tab.h: parser.y
 	$(YACC) $< 
@@ -32,5 +46,14 @@ parser.tab.c parser.tab.h: parser.y
 lex.yy.c: lexer.lex
 	$(LEX) $<
 
+$(testdir)%.o: $(testdir)%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+$(testdir)%.dbg.o: $(testdir)%.c
+	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
 
+$(objdir)%.o: $(srcdir)%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(objdir)%.dbg.o: $(srcdir)%.c
+	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
