@@ -260,7 +260,7 @@ static void scheduler_leave(scheduler_t *scheduler, gthread_t gthread){
   */
   DBG("returning to %p\n", gthread);
   if (-1 == swapcontext(&(scheduler->gthread.context), &(gthread->context))){
-    perror(__FUNCTION__);
+    perror(__func__);
     exit(EXIT_FAILURE);
   }
   DBG_FUN("end");
@@ -276,7 +276,7 @@ static void scheduler_enter(){
   */
   DBG("leaving %p\n", current);
   if (-1 == swapcontext(&(current->context), &(scheduler->gthread.context))){
-    perror(__FUNCTION__);
+    perror(__func__);
     exit(EXIT_FAILURE);
   }
   DBG_FUN("end");
